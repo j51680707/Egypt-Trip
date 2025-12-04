@@ -609,6 +609,23 @@
               <div className="p-4 space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 px-2">行程手繪插圖</h2>
                 
+                {/* Day 2-10 Map Illustration */}
+                <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
+                   <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
+                     <Calendar size={20} />
+                     手繪行程地圖 (Day 2-10)
+                   </h3>
+                   <img 
+                     src="Egypt_Day_02-10_Map.png" 
+                     alt="手繪行程地圖 (Day 2-10)" 
+                     className="w-full h-auto rounded-lg object-contain bg-gray-100 min-h-[200px]"
+                     onError={(e) => {
+                       e.target.onerror = null; 
+                       e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(Egypt_Day_02-10_Map.png)';
+                     }}
+                   />
+                </div>
+
                 {/* Day 1-6 Illustration */}
                 <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
                    <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
@@ -770,7 +787,7 @@
                   className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'illustrations' ? 'text-yellow-600' : 'text-gray-400'}`}
                 >
                   <ImageIcon size={22} />
-                  <span className="text-[10px] font-bold">插圖</span>
+                  <span className="text-[10px] font-bold">行程插圖</span>
                 </button>
 
                 {/* Floating Action Button Style Center */}
