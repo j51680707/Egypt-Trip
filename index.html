@@ -1,715 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Plane, MapPin, Sun, Calendar, Info, X, 
-  Utensils, Camera, Bus, Ship, Moon, 
-  ChevronDown, ChevronUp, Map as MapIcon, 
-  List, Navigation, DollarSign, Thermometer,
-  Image as ImageIcon, ShoppingBag
-} from 'lucide-react';
-
-// --- Mock Data: 行程資料 (更新為 11 天版本，含詳細航班資訊) ---
-const itineraryData = [
-  {
-    day: 1,
-    title: "啟程：台北前往上海",
-    city: "台北 -> 上海 (轉機)",
-    coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
-    events: [
-      { 
-        time: "15:00", 
-        type: "flight", 
-        title: "飛往浦東 (MU5008)", 
-        desc: "15:00 桃園起飛 - 17:05 抵達浦東。", 
-        location: "Taoyuan International Airport", 
-        detail: "航班：東方航空 MU5008 / 機型：A330 / 飛行時間：2小時5分。" 
-      },
-      { time: "18:30", type: "food", title: "上海晚餐 & 黃浦江遊覽", desc: "入境上海享用中式合菜，並遊覽黃浦江外灘夜景。", location: "The Bund, Shanghai", detail: "感受上海灘的繁華，隨後前往機場準備飛往埃及。" },
-    ]
-  },
-  {
-    day: 2,
-    title: "抵達開羅：古文明初探",
-    city: "上海 -> 開羅",
-    coords: { lat: 30.0444, lng: 31.2357 }, // Cairo
-    events: [
-      { 
-        time: "01:00", 
-        type: "flight", 
-        title: "飛往開羅 (MU223)", 
-        desc: "01:00 浦東起飛 - 07:30 抵達開羅。", 
-        location: "Cairo International Airport", 
-        detail: "航班：東方航空 MU223 / 機型：A350-900 / 飛行時間：12小時30分。" 
-      },
-      { time: "09:00", type: "sight", title: "薩拉丁城堡 & 阿里清真寺", desc: "眺望開羅市景，參觀媲美藍色清真寺的阿里清真寺。", location: "Cairo Citadel", detail: "由薩拉丁建於12世紀，內部有華麗的雪花石膏清真寺。" },
-      { time: "14:00", type: "sight", title: "懸空教堂", desc: "建於古羅馬巴比倫城堡之上的最古老教堂。", location: "The Hanging Church", detail: "內部擁有精美的木雕與象牙祭壇，氣氛莊嚴。" },
-      { time: "18:00", type: "hotel", title: "入住飯店", desc: "Helnan Dream Land 或 Hilton Golf 或同級", location: "Cairo", detail: "好好休息，調整時差。" }
-    ]
-  },
-  {
-    day: 3,
-    title: "跨越時空的金字塔",
-    city: "開羅 -> 亞斯文",
-    coords: { lat: 29.9792, lng: 31.1342 }, // Giza
-    events: [
-      { time: "09:00", type: "sight", title: "大埃及博物館 (GEM)", desc: "預計 2025 年正式全區開放，全球最大古埃及博物館。", location: "Grand Egyptian Museum", detail: "位於金字塔旁，展出完整的圖坦卡門陪葬品系列。" },
-      { time: "12:00", type: "food", title: "金字塔景觀午餐", desc: "一邊用餐一邊欣賞古老金字塔。", location: "Giza Plateau", detail: "" },
-      { time: "13:30", type: "sight", title: "吉薩金字塔群", desc: "胡夫、卡夫拉、孟卡拉金字塔與人面獅身像。", location: "Giza Necropolis", detail: "特別安排：騎駱駝體驗，漫步於沙漠之中。" },
-      { 
-        time: "待定", 
-        type: "flight", 
-        title: "國內班機前往亞斯文", 
-        desc: "搭乘國內線班機飛往南部大城亞斯文。", 
-        location: "Aswan", 
-        detail: "實際航班時間依當地航空公司安排為準。" 
-      },
-      { time: "20:00", type: "hotel", title: "入住亞斯文飯店", desc: "Tolip Aswan Hotel 或同級", location: "Tolip Aswan Hotel", detail: "尼羅河畔的五星級飯店。" }
-    ]
-  },
-  {
-    day: 4,
-    title: "努比亞風情與揚帆",
-    city: "亞斯文 (登船)",
-    coords: { lat: 24.0889, lng: 32.8998 }, // Aswan
-    events: [
-      { time: "09:00", type: "sight", title: "菲萊神殿", desc: "供奉愛神伊希斯，有『尼羅河明珠』美譽。", location: "Philae Temple", detail: "搭乘汽船前往阿吉勒基亞島參觀。" },
-      { time: "14:00", type: "sight", title: "努比亞村落巡禮", desc: "騎駱駝拜訪色彩繽紛的部落，享用熱情茶點。", location: "Nubian Village", detail: "體驗努比亞人的熱情與傳統生活方式。" },
-      { time: "16:30", type: "sight", title: "阿拉伯式風帆船", desc: "Felucca 黃昏遊，享受尼羅河的浪漫時刻。", location: "Nile River", detail: "靠著自然風力航行，寧靜而優美。" },
-      { time: "18:00", type: "ship", title: "入住尼羅河遊輪", desc: "Semeramis 2 或同級五星遊輪。", location: "Nile Cruise", detail: "展開為期四天三夜的遊輪之旅，含全包式餐飲。" }
-    ]
-  },
-  {
-    day: 5,
-    title: "阿布辛貝的神蹟",
-    city: "亞斯文 -> 康孟波",
-    coords: { lat: 22.3372, lng: 31.6258 }, // Abu Simbel
-    events: [
-      { time: "04:30", type: "bus", title: "前往阿布辛貝", desc: "清晨跟隨車隊穿越沙漠 (單程約3.5hr)。", location: "Abu Simbel", detail: "為了一睹拉美西斯二世最偉大的建築。" },
-      { time: "08:30", type: "sight", title: "阿布辛貝雙神殿", desc: "巨大的四座法老坐像，聯合國搶救遷移的奇蹟。", location: "Abu Simbel Temples", detail: "包含大神殿(拉美西斯二世)與小神殿(納菲塔莉皇后)。" },
-      { time: "16:00", type: "sight", title: "康孟波雙神殿", desc: "供奉鱷魚神與老鷹神，擁有獨特的雙對稱結構。", location: "Temple of Kom Ombo", detail: "在此可看見古埃及的醫療與手術器具浮雕。" },
-      { time: "Night", type: "ship", title: "遊輪往北航行", desc: "前往艾德福。", location: "Nile River", detail: "享受遊輪設施與晚餐。" }
-    ]
-  },
-  {
-    day: 6,
-    title: "眾神之鄉路克索",
-    city: "艾德福 -> 路克索",
-    coords: { lat: 25.1297, lng: 32.8712 }, // Edfu
-    events: [
-      { time: "08:00", type: "sight", title: "艾德福神殿", desc: "搭乘馬車前往，保存最完好的荷魯斯神殿。", location: "Temple of Edfu", detail: "體驗當地特色交通工具馬車。" },
-      { time: "13:00", type: "sight", title: "伊斯納水閘門", desc: "觀賞遊輪通過水閘門的水位調節過程。", location: "Esna Lock", detail: "小販會將商品拋上甲板叫賣，蔚為奇觀。" },
-      { time: "19:00", type: "sight", title: "路克索神殿", desc: "夜遊神殿，燈光下的古蹟更顯神秘。", location: "Luxor Temple", detail: "位於市中心，可看見清真寺與古神殿共存的畫面。" },
-      { time: "20:30", type: "ship", title: "阿拉伯之夜", desc: "遊輪上舉辦變裝晚會 (Galabeya Party)。", location: "Cruise", detail: "建議在市集或神殿旁購買埃及長袍參加。" }
-    ]
-  },
-  {
-    day: 7,
-    title: "帝王谷與紅海",
-    city: "路克索 -> 虎加達",
-    coords: { lat: 25.7402, lng: 32.6014 }, // Valley of Kings
-    events: [
-      { time: "05:30", type: "optional", title: "(自費) 熱氣球", desc: "清晨升空，俯瞰帝王谷與尼羅河日出。", location: "Luxor West Bank", detail: "一生一次的難得體驗。" },
-      { time: "09:00", type: "sight", title: "帝王谷 & 曼儂巨像", desc: "參觀新王國時期法老的陵墓。", location: "Valley of the Kings", detail: "包含進入三座陵墓參觀，欣賞色彩依舊鮮豔的壁畫。" },
-      { time: "14:00", type: "bus", title: "前往紅海", desc: "驅車前往渡假勝地虎加達。", location: "Hurghada", detail: "享受從沙漠到海洋的景色轉換。" },
-      { time: "18:00", type: "hotel", title: "入住紅海渡假村", desc: "Stella Garden Resort 或同級", location: "Hurghada Resort", detail: "享受全包式渡假村設施。" }
-    ]
-  },
-  {
-    day: 8,
-    title: "紅海蔚藍假期",
-    city: "虎加達 (自由活動)",
-    coords: { lat: 27.2579, lng: 33.8116 }, // Hurghada
-    events: [
-      { time: "All Day", type: "sight", title: "全日自由活動", desc: "享受飯店設施或參加自費行程。", location: "Hurghada", detail: "推薦自費：玻璃底船、沙漠吉普車衝沙、紅海出海遊艇。" },
-      { time: "Optional", type: "optional", title: "(自費) 玻璃底船", desc: "輕鬆欣賞海底珊瑚礁。", location: "Red Sea", detail: "適合不便下水的旅客。" },
-      { time: "Optional", type: "optional", title: "(自費) 沙漠衝沙", desc: "四輪驅動車拜訪貝都因村落。", location: "Eastern Desert", detail: "體驗滑沙與貝都因茶。" }
-    ]
-  },
-  {
-    day: 9,
-    title: "返回開羅與市集",
-    city: "虎加達 -> 開羅",
-    coords: { lat: 30.0444, lng: 31.2357 },
-    events: [
-      { time: "08:00", type: "bus", title: "返回開羅", desc: "沿著紅海海岸公路返回首都。", location: "Cairo", detail: "車程約 5-6 小時。" },
-      { time: "15:00", type: "sight", title: "莎草紙 & 香精油工廠", desc: "參觀古埃及造紙術與天然香精製作。", location: "Giza", detail: "了解古文明的工藝傳承。" },
-      { time: "17:00", type: "sight", title: "哈利利市集", desc: "最古老的傳統市集，迷宮般的巷弄。", location: "Khan el-Khalili", detail: "必買：神燈、香料、紀念品。請享受殺價樂趣。" },
-      { time: "19:00", type: "hotel", title: "入住飯店", desc: "Hilton Grand Nile Tower 或同級", location: "Cairo", detail: "在埃及的最後一晚。" }
-    ]
-  },
-  {
-    day: 10,
-    title: "再見，埃及",
-    city: "開羅 -> 上海",
-    coords: { lat: 30.1124, lng: 31.4005 }, // Cairo Airport
-    events: [
-      { time: "09:00", type: "bus", title: "前往機場", desc: "帶著滿滿回憶前往開羅機場。", location: "Cairo International Airport", detail: "辦理登機與出境手續。" },
-      { 
-        time: "13:00", 
-        type: "flight", 
-        title: "飛往浦東 (MU224)", 
-        desc: "13:00 開羅起飛 - 05:20(+1) 抵達浦東。", 
-        location: "On Board", 
-        detail: "航班：東方航空 MU224 / 機型：A350-900 / 飛行時間：10小時20分。" 
-      }
-    ]
-  },
-  {
-    day: 11,
-    title: "上海巡禮與返家",
-    city: "上海 -> 台北",
-    coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
-    events: [
-      { time: "05:20", type: "flight", title: "抵達上海", desc: "清晨抵達浦東機場，入境轉機半日遊。", location: "Pudong Airport", detail: "入境中國進行轉機半日遊。" },
-      { time: "09:00", type: "sight", title: "豫園 & 新天地", desc: "遊覽上海著名景點。", location: "Shanghai", detail: "感受海派文化與石庫門建築。" },
-      { time: "13:00", type: "bus", title: "磁浮列車", desc: "搭乘高速磁浮列車返回機場。", location: "Longyang Road Station", detail: "體驗時速300公里以上的快感。" },
-      { 
-        time: "15:45", 
-        type: "flight", 
-        title: "飛往台北 (MU5005)", 
-        desc: "15:45 浦東起飛 - 17:40 抵達桃園。", 
-        location: "Taoyuan Airport", 
-        detail: "航班：東方航空 MU5005 / 機型：A330 / 飛行時間：1小時55分。" 
-      }
-    ]
-  }
-];
-
-// --- Mock Data: 台灣人旅遊注意事項 ---
-const twTips = [
-  { icon: <DollarSign size={18} />, title: "小費文化 (Baksheesh)", text: "埃及是小費國家。上廁所約 10-20 EGP，提行李約 1 USD/次。建議多換些 1 美元紙鈔或小額埃鎊。" },
-  { icon: <Utensils size={18} />, title: "飲食飲水", text: "絕對不要飲用生水(含漱口)，請喝瓶裝水。生菜沙拉建議少吃，以免腸胃不適。建議自備腸胃藥。" },
-  { icon: <Sun size={18} />, title: "氣候穿著", text: "早晚溫差大，沙漠氣候乾燥。請洋蔥式穿搭，並攜帶帽子、墨鏡、高係數防曬乳。參觀清真寺女性需包頭巾。" },
-  { icon: <Info size={18} />, title: "購物殺價", text: "在觀光區(如市集)購物，請從開價的 3-5 折開始殺價。堅持底線，態度友善但堅定。" },
-  { icon: <Plane size={18} />, title: "簽證", text: "台灣護照持有人可於抵達埃及機場時辦理落地簽證 (25 USD)。" },
-];
-
-// --- Mock Data: 伴手禮資料 ---
-const souvenirData = [
-  {
-    id: 1,
-    name: "莎草紙畫 (Papyrus)",
-    desc: "古埃及流傳千年的造紙工藝，繪有諸神傳說或生活場景。請認明不易折斷、有韌性的正版莎草紙。",
-    image: "https://images.unsplash.com/photo-1566230948955-d9cb75082042?auto=format&fit=crop&q=80&w=800",
-    tips: "購買時可測試紙張韌性，正版不易折斷。市集價格混亂，建議至正規畫廊或工廠選購。"
-  },
-  {
-    id: 2,
-    name: "埃及香精 (Perfume Essence)",
-    desc: "埃及是許多國際名牌香水的原料產地。純正香精不含酒精，留香時間長。",
-    image: "https://images.unsplash.com/photo-1595123550441-d377e017de2a?auto=format&fit=crop&q=80&w=800",
-    tips: "蓮花(Lotus)與紙莎草(Papyrus)是經典國花香味；『沙漠的秘密』也是熱門款。"
-  },
-  {
-    id: 3,
-    name: "椰棗 (Dates)",
-    desc: "沙漠中的麵包，營養價值極高。口感軟糯甜蜜，包杏仁或核桃的款式最受歡迎。",
-    image: "https://images.unsplash.com/photo-1582234032609-0d86e92f3a62?auto=format&fit=crop&q=80&w=800",
-    tips: "超市購買包裝好的比較衛生，Aswan 市集的乾貨品質也很棒。"
-  },
-  {
-    id: 4,
-    name: "芙蓉花茶 (Hibiscus/Karkade)",
-    desc: "埃及國民飲料，富含維他命C，呈現美麗的寶石紅。冷熱飲皆宜，酸甜開胃。",
-    image: "https://images.unsplash.com/photo-1576092768241-dec231847233?auto=format&fit=crop&q=80&w=800",
-    tips: "Aswan 的芙蓉花品質被認為是最好的。"
-  },
-  {
-    id: 5,
-    name: "雪花石膏 (Alabaster)",
-    desc: "路克索特產，質地細緻透光。常被雕刻成神像、花瓶或燭台。",
-    image: "https://images.unsplash.com/photo-1544525890-59fc6c55940c?auto=format&fit=crop&q=80&w=800",
-    tips: "手工製品通常不完美，機器製品則過於平滑。白色透光度高者為佳。"
-  },
-  {
-    id: 6,
-    name: "Nefertari 手工皂",
-    desc: "埃及頂級天然保養品牌，使用埃及在地原料（如羊奶、蜂蜜）製作。",
-    image: "https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&q=80&w=800",
-    tips: "機場或百貨商場有專櫃，價格固定，不用殺價。"
-  }
-];
-
-// --- Sub-components ---
-
-const IconWrapper = ({ type }) => {
-  const baseClass = "p-2 rounded-full text-white shadow-md";
-  switch (type) {
-    case 'flight': return <div className={`${baseClass} bg-blue-500`}><Plane size={20} /></div>;
-    case 'food': return <div className={`${baseClass} bg-orange-500`}><Utensils size={20} /></div>;
-    case 'sight': return <div className={`${baseClass} bg-yellow-600`}><Camera size={20} /></div>;
-    case 'hotel': return <div className={`${baseClass} bg-indigo-500`}><Moon size={20} /></div>;
-    case 'bus': return <div className={`${baseClass} bg-green-600`}><Bus size={20} /></div>;
-    case 'ship': return <div className={`${baseClass} bg-cyan-600`}><Ship size={20} /></div>;
-    case 'optional': return <div className={`${baseClass} bg-purple-500`}><DollarSign size={20} /></div>;
-    default: return <div className={`${baseClass} bg-gray-500`}><MapPin size={20} /></div>;
-  }
-};
-
-const Modal = ({ isOpen, onClose, data }) => {
-  if (!isOpen || !data) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative animate-slide-up">
-        {/* Header Image Placeholder */}
-        <div className="h-32 bg-gradient-to-r from-yellow-600 to-yellow-800 flex items-center justify-center relative">
-          <h3 className="text-white text-2xl font-bold px-4 text-center drop-shadow-md">{data.title}</h3>
-          <button 
-            onClick={onClose}
-            className="absolute top-3 right-3 bg-white/20 hover:bg-white/40 rounded-full p-1 text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-4">
-          <div className="flex items-center text-gray-600 mb-2">
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm font-bold mr-3">{data.time}</span>
-            <span className="text-sm border border-gray-300 px-2 py-0.5 rounded-full">{data.type.toUpperCase()}</span>
-          </div>
-          
-          <p className="text-gray-700 leading-relaxed">
-            {data.desc}
-          </p>
-
-          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-            <h4 className="text-yellow-800 font-bold mb-2 flex items-center">
-              <Info size={16} className="mr-2" /> 詳細資訊
-            </h4>
-            <p className="text-sm text-gray-700">{data.detail || "暫無詳細資訊。"}</p>
-          </div>
-
-          <a 
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.location)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
-          >
-            <Navigation size={18} />
-            開啟 Google Maps 導航
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const TipsModal = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative max-h-[80vh] flex flex-col">
-        <div className="bg-teal-700 p-4 flex justify-between items-center sticky top-0 z-10">
-          <h3 className="text-white text-lg font-bold flex items-center gap-2">
-            <span className="text-xl">🇹🇼</span> 台灣旅客埃及教戰守則
-          </h3>
-          <button onClick={onClose} className="text-white/80 hover:text-white"><X size={24}/></button>
-        </div>
-        <div className="p-5 overflow-y-auto space-y-4">
-          {twTips.map((tip, idx) => (
-            <div key={idx} className="flex gap-4 p-3 border-b border-gray-100 last:border-0">
-              <div className="text-teal-600 mt-1 shrink-0">{tip.icon}</div>
-              <div>
-                <h4 className="font-bold text-gray-800">{tip.title}</h4>
-                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{tip.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Main Component ---
-
-export default function EgyptApp() {
-  const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' or 'map' or 'illustrations' or 'souvenirs'
-  const [currentDay, setCurrentDay] = useState(1);
-  const [isHeroOpen, setIsHeroOpen] = useState(true);
-  const [weather, setWeather] = useState({ temp: '--', condition: 'Loading...' });
-  const [rate, setRate] = useState('Loading...');
-  const [modalData, setModalData] = useState(null);
-  const [isTipsOpen, setIsTipsOpen] = useState(false);
-  
-  // Refs for scrolling
-  const timelineRef = useRef(null);
-
-  // Simulated API Calls
-  useEffect(() => {
-    // Mock Weather API
-    const timer = setTimeout(() => {
-      setWeather({ temp: '32°C', condition: '晴朗乾燥' });
-      setRate('1 EGP ≈ 0.65 TWD');
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleCardClick = (event) => {
-    setModalData(event);
-  };
-
-  const handleMapMarkerClick = (day) => {
-    setCurrentDay(day);
-    setActiveTab('timeline');
-    // Simple logic to scroll to top when switching
-    if (timelineRef.current) timelineRef.current.scrollTop = 0;
-  };
-
-  const currentItinerary = itineraryData.find(d => d.day === currentDay);
-
-  // --- Render Functions ---
-
-  const renderTimeline = () => (
-    <div className="pb-24 pt-2 px-2" ref={timelineRef}>
-      {/* Day Selector Strip */}
-      <div className="flex overflow-x-auto py-3 gap-2 px-2 mb-2 no-scrollbar snap-x">
-        {itineraryData.map((d) => (
-          <button
-            key={d.day}
-            onClick={() => setCurrentDay(d.day)}
-            className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-sm
-              ${currentDay === d.day 
-                ? 'bg-yellow-600 text-white scale-105 ring-2 ring-yellow-300' 
-                : 'bg-white text-gray-500 border border-gray-200'}`}
-          >
-            Day {d.day}
-          </button>
-        ))}
-      </div>
-
-      {/* Day Header */}
-      <div className="bg-white rounded-xl p-4 shadow-sm mb-6 border-l-4 border-yellow-500 mx-2">
-        <h2 className="text-2xl font-bold text-gray-800">Day {currentDay}</h2>
-        <p className="text-gray-500 font-medium">{currentItinerary.title}</p>
-        <div className="flex items-center text-xs text-gray-400 mt-2">
-          <MapPin size={12} className="mr-1" />
-          {currentItinerary.city}
-        </div>
-      </div>
-
-      {/* Vertical Timeline */}
-      <div className="relative pl-4 pr-2 space-y-8">
-        {/* Vertical Line */}
-        <div className="absolute left-[27px] top-2 bottom-0 w-0.5 bg-gray-200 -z-10"></div>
-
-        {currentItinerary.events.map((event, index) => (
-          <div 
-            key={index} 
-            className="relative flex items-start gap-4 animate-fade-in-up"
-            style={{ animationDelay: `${index * 100}ms` }}
-            onClick={() => handleCardClick(event)}
-          >
-            {/* Time Column */}
-            <div className="flex flex-col items-center min-w-[50px] pt-1 bg-gray-50/80 backdrop-blur rounded p-1 z-0">
-              <span className="text-xs font-bold text-gray-800">{event.time}</span>
-            </div>
-
-            {/* Icon Node */}
-            <div className="absolute left-[17px] top-1 z-10 bg-gray-50 rounded-full p-1 border border-white">
-              <IconWrapper type={event.type} />
-            </div>
-
-            {/* Card */}
-            <div className="flex-1 bg-white rounded-xl p-4 shadow-md border border-gray-100 active:scale-[0.98] transition-transform cursor-pointer hover:shadow-lg ml-3">
-              <div className="flex justify-between items-start">
-                <h3 className="font-bold text-gray-800 text-lg leading-tight">{event.title}</h3>
-              </div>
-              <p className="text-gray-500 text-sm mt-1 line-clamp-2">{event.desc}</p>
-              
-              {/* Chips */}
-              <div className="flex gap-2 mt-3">
-                {event.location && (
-                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-full flex items-center">
-                    <MapPin size={10} className="mr-1" /> {event.location}
-                  </span>
-                )}
-                <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
-                  點擊詳情
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        {/* End of Day Marker */}
-        <div className="flex items-center gap-4 pt-4">
-           <div className="w-[50px] flex justify-center">
-             <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-           </div>
-           <div className="text-gray-400 text-sm italic">End of Day {currentDay}</div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderSchematicMap = () => (
-    <div className="h-full bg-[#fcf9f2] flex flex-col">
-       {/* Google Map Iframe */}
-       <div className="w-full h-1/2 bg-gray-200 relative">
-          <iframe 
-            width="100%" 
-            height="100%" 
-            frameBorder="0" 
-            scrolling="no" 
-            marginHeight="0" 
-            marginWidth="0" 
-            src={`https://maps.google.com/maps?q=${currentItinerary.coords.lat},${currentItinerary.coords.lng}&hl=zh-TW&z=10&output=embed`}
-            title="Google Map"
-          ></iframe>
-          <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-xs rounded shadow">
-            {currentItinerary.city}
-          </div>
-       </div>
-
-       {/* Schematic List */}
-       <div className="flex-1 overflow-y-auto p-6 pb-24">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">行程地圖導覽</h2>
-          <div className="relative border-l-2 border-yellow-400 ml-4 space-y-8">
-            {itineraryData.map((day) => (
-               <div 
-                 key={day.day} 
-                 className={`relative pl-6 cursor-pointer group transition-all ${currentDay === day.day ? 'opacity-100 scale-105' : 'opacity-60 hover:opacity-100'}`}
-                 onClick={() => setCurrentDay(day.day)}
-               >
-                 {/* Dot */}
-                 <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${currentDay === day.day ? 'bg-blue-600 scale-125' : 'bg-yellow-500'}`}></div>
-                 
-                 {/* Content */}
-                 <div>
-                   <span className="text-xs font-bold text-yellow-600 uppercase">Day {day.day}</span>
-                   <h3 className="font-bold text-gray-800">{day.city.split('->')[0]}</h3>
-                   <p className="text-xs text-gray-500 truncate">{day.title}</p>
-                 </div>
-                 
-                 {/* Jump Button (only visible if active) */}
-                 {currentDay === day.day && (
-                   <button 
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       handleMapMarkerClick(day.day);
-                     }}
-                     className="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-sm hover:bg-blue-700"
-                   >
-                     查看行程 <List size={12} />
-                   </button>
-                 )}
-               </div>
-            ))}
-          </div>
-       </div>
-    </div>
-  );
-
-  const renderIllustrations = () => (
-    <div className="h-full bg-[#fcf9f2] pb-24 overflow-y-auto">
-      <div className="p-4 space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 px-2">行程手繪插圖</h2>
-        
-        {/* Day 1-6 Illustration */}
-        <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
-           <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
-             <Calendar size={20} />
-             上篇：Day 1-6
-           </h3>
-           <img 
-             src="Egypt_Day_01-06.png" 
-             alt="Egypt Itinerary Day 1-6 Illustration" 
-             className="w-full h-auto rounded-lg object-contain bg-gray-100 min-h-[200px]"
-             onError={(e) => {
-               e.target.onerror = null; 
-               e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(Egypt_Day_01-06.png)';
-             }}
-           />
-        </div>
-
-        {/* Day 7-11 Illustration */}
-        <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
-           <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
-             <Calendar size={20} />
-             下篇：Day 7-11
-           </h3>
-           <img 
-             src="Egypt_Day_07-11.png" 
-             alt="Egypt Itinerary Day 7-11 Illustration" 
-             className="w-full h-auto rounded-lg object-contain bg-gray-100 min-h-[200px]"
-             onError={(e) => {
-               e.target.onerror = null; 
-               e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(Egypt_Day_07-11.png)';
-             }}
-           />
-        </div>
-
-        <p className="text-center text-gray-400 text-sm italic">
-           * 圖片僅供參考，實際行程請以文字說明為準
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderSouvenirs = () => (
-    <div className="h-full bg-[#fcf9f2] pb-24 overflow-y-auto">
-      <div className="p-4 space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2 px-2">埃及必買伴手禮</h2>
-        <p className="text-sm text-gray-500 px-2 mb-4">把千年文明的回憶帶回家</p>
-        
-        <div className="grid grid-cols-1 gap-4">
-          {souvenirData.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
-              <div className="h-40 w-full bg-gray-200 relative">
-                 <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                 />
-                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                   <h3 className="text-white font-bold text-lg">{item.name}</h3>
-                 </div>
-              </div>
-              <div className="p-4">
-                <p className="text-gray-700 text-sm mb-3 leading-relaxed">{item.desc}</p>
-                <div className="bg-yellow-50 p-2 rounded border border-yellow-100 flex items-start gap-2">
-                   <Info size={14} className="text-yellow-600 mt-1 shrink-0" />
-                   <p className="text-xs text-yellow-800">{item.tips}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="max-w-md mx-auto h-screen bg-gray-50 flex flex-col relative font-sans text-gray-900 overflow-hidden border-x border-gray-200 shadow-2xl">
-      
-      {/* 1. Hero Section - Collapsible Drawer Style */}
-      <div 
-        className={`bg-slate-900 bg-cover bg-center text-white transition-all duration-300 ease-in-out z-20 shadow-md flex flex-col shrink-0 ${isHeroOpen ? 'max-h-80' : 'max-h-[84px]'}`}
-        style={{ backgroundImage: `url('Egypt_Banner.png')` }}
-      >
-        <div className="bg-black/40 w-full h-full flex flex-col">
-          <div className="p-4 flex-1 overflow-hidden">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                 <span className="bg-yellow-500 text-xs font-bold px-2 py-0.5 rounded text-black">EGYPT</span>
-                 <h1 className="font-bold text-lg tracking-wide drop-shadow-md">尼羅河傳說 {itineraryData.length} 日遊</h1>
-              </div>
-              <div className="flex gap-3">
-                 <button onClick={() => setIsTipsOpen(true)} className="bg-black/30 backdrop-blur-sm p-2 rounded-full hover:bg-black/50 transition-colors border border-white/20">
-                    <span className="text-sm font-bold">🇹🇼 TIPS</span>
-                 </button>
-              </div>
-            </div>
-
-            {/* Collapsible Content */}
-            <div className={`mt-4 space-y-4 transition-opacity duration-300 ${isHeroOpen ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-black/40 rounded-lg p-3 backdrop-blur-sm border border-white/10">
-                  <div className="flex items-center text-yellow-400 mb-1">
-                    <Sun size={16} className="mr-1" />
-                    <span className="text-xs font-bold">目前天氣</span>
-                  </div>
-                  <div className="text-2xl font-bold">{weather.temp}</div>
-                  <div className="text-xs text-gray-300">{weather.condition}</div>
-                </div>
-                <div className="bg-black/40 rounded-lg p-3 backdrop-blur-sm border border-white/10">
-                  <div className="flex items-center text-green-400 mb-1">
-                    <DollarSign size={16} className="mr-1" />
-                    <span className="text-xs font-bold">參考匯率</span>
-                  </div>
-                  <div className="text-sm font-medium mt-1">{rate}</div>
-                  <div className="text-[10px] text-gray-400 mt-1">請準備小額美金</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center text-xs text-gray-300 bg-black/30 w-fit px-2 py-1 rounded backdrop-blur-sm">
-                 <MapPin size={12} className="mr-1" /> 
-                 <span>現在位置: {activeTab === 'timeline' ? itineraryData[currentDay-1].city : '全覽模式'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Toggle Handle Bar */}
-          <button 
-             onClick={() => setIsHeroOpen(!isHeroOpen)}
-             className="h-6 w-full flex items-center justify-center bg-black/40 hover:bg-black/60 transition-colors cursor-pointer active:bg-black/70 border-t border-white/10 backdrop-blur-sm"
-          >
-             {isHeroOpen ? <ChevronUp size={16} className="text-white/80" /> : <ChevronDown size={16} className="text-white/80" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 relative scroll-smooth">
-        {activeTab === 'timeline' ? renderTimeline() : 
-         activeTab === 'map' ? renderSchematicMap() : 
-         activeTab === 'illustrations' ? renderIllustrations() :
-         renderSouvenirs()}
-      </div>
-
-      {/* 3. Bottom Navigation */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 flex justify-around items-center z-30 pb-safe">
-        <button 
-          onClick={() => setActiveTab('timeline')}
-          className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'timeline' ? 'text-yellow-600' : 'text-gray-400'}`}
-        >
-          <List size={22} />
-          <span className="text-[10px] font-bold">每日行程</span>
-        </button>
-        
-        <button 
-          onClick={() => setActiveTab('illustrations')}
-          className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'illustrations' ? 'text-yellow-600' : 'text-gray-400'}`}
-        >
-          <ImageIcon size={22} />
-          <span className="text-[10px] font-bold">插圖</span>
-        </button>
-
-        {/* Floating Action Button Style Center */}
-        <div className="relative -top-6">
-          <button 
-             className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full shadow-xl flex items-center justify-center text-white border-4 border-gray-50 transform active:scale-95 transition-transform"
-             onClick={() => {
-                setActiveTab('timeline');
-                setCurrentDay(1); // Reset to day 1 or current real date logic
-             }}
-          >
-             <Plane size={24} />
-          </button>
-        </div>
-
-        <button 
-          onClick={() => setActiveTab('souvenirs')}
-          className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'souvenirs' ? 'text-yellow-600' : 'text-gray-400'}`}
-        >
-          <ShoppingBag size={22} />
-          <span className="text-[10px] font-bold">伴手禮</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('map')}
-          className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'map' ? 'text-yellow-600' : 'text-gray-400'}`}
-        >
-          <MapIcon size={22} />
-          <span className="text-[10px] font-bold">總覽地圖</span>
-        </button>
-      </div>
-
-      {/* Modals */}
-      <Modal 
-        isOpen={!!modalData} 
-        data={modalData} 
-        onClose={() => setModalData(null)} 
-      />
-      
-      <TipsModal 
-        isOpen={isTipsOpen} 
-        onClose={() => setIsTipsOpen(false)} 
-      />
-
-      <style>{`
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>埃及時光旅人 | Egypt Time Traveler</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* 自定義樣式 */
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
@@ -741,7 +48,767 @@ export default function EgyptApp() {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
-      `}</style>
-    </div>
-  );
-}
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // --- 內建圖示元件 (移除外部依賴以確保穩定性) ---
+        // 使用通用 SVG 定義，確保不會有 forwardRef 錯誤
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {children}
+            </svg>
+        );
+
+        const Plane = (props) => <IconBase {...props}><path d="M2 12h20"/><path d="M13 2l9 10-9 10"/><path d="M2 12l5-5m-5 5l5 5"/></IconBase>; 
+        // 修正飛機圖示為更像飛機的形狀
+        const PlaneIcon = (props) => <IconBase {...props}><path d="M2 22h20"/><path d="M13 2 9 17"/><path d="M13 2 17 17"/><path d="m13 2-9 10h18z"/><path d="M2 22 13 2 24 22"/></IconBase>; // 簡化版紙飛機/飛機
+        
+        const RealPlane = (props) => <IconBase {...props}><path d="M20.669 13.917c.231-.571.366-1.196.331-1.85-.094-1.722-1.326-3.003-2.92-3.003h-1.956L10.375 2.5H6.5l4.625 6.567H6.5l-2.625-2.5H2l1.5 4.5L2 15.567h1.875l2.625-2.5h4.625L6.5 19.633h3.875l5.749-6.566h1.956c1.235 0 2.261-.758 2.589-1.15z"/></IconBase>;
+
+        // 使用標準 Lucide 路徑
+        const MapPin = (props) => <IconBase {...props}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>;
+        const Sun = (props) => <IconBase {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></IconBase>;
+        const Calendar = (props) => <IconBase {...props}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
+        const X = (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
+        const Utensils = (props) => <IconBase {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></IconBase>;
+        const Camera = (props) => <IconBase {...props}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></IconBase>;
+        const Bus = (props) => <IconBase {...props}><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 21v-2"/><path d="M6 21v-2"/><rect width="20" height="14" x="2" y="5" rx="3"/></IconBase>;
+        const Ship = (props) => <IconBase {...props}><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.9 5.8 2.5 8"/><path d="M10 2v4"/><path d="M8 6h4"/><path d="M12 2v4"/></IconBase>;
+        const Moon = (props) => <IconBase {...props}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></IconBase>;
+        const ChevronDown = (props) => <IconBase {...props}><path d="m6 9 6 6 6-6"/></IconBase>;
+        const ChevronUp = (props) => <IconBase {...props}><path d="m18 15-6-6-6 6"/></IconBase>;
+        const MapIcon = (props) => <IconBase {...props}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></IconBase>;
+        const List = (props) => <IconBase {...props}><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></IconBase>;
+        const Navigation = (props) => <IconBase {...props}><polygon points="3 11 22 2 13 21 11 13 3 11"/></IconBase>;
+        const DollarSign = (props) => <IconBase {...props}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></IconBase>;
+        const Thermometer = (props) => <IconBase {...props}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></IconBase>;
+        const ImageIcon = (props) => <IconBase {...props}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></IconBase>;
+        const ShoppingBag = (props) => <IconBase {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>;
+
+        // --- Mock Data: 行程資料 ---
+        const itineraryData = [
+          {
+            day: 1,
+            title: "啟程：台北前往上海",
+            city: "台北 -> 上海 (轉機)",
+            coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
+            events: [
+              { 
+                time: "15:00", 
+                type: "flight", 
+                title: "飛往浦東 (MU5008)", 
+                desc: "15:00 桃園起飛 - 17:05 抵達浦東。", 
+                location: "Taoyuan International Airport", 
+                detail: "航班：東方航空 MU5008 / 機型：A330 / 飛行時間：2小時5分。" 
+              },
+              { time: "18:30", type: "food", title: "上海晚餐 & 黃浦江遊覽", desc: "入境上海享用中式合菜，並遊覽黃浦江外灘夜景。", location: "The Bund, Shanghai", detail: "感受上海灘的繁華，隨後前往機場準備飛往埃及。" },
+            ]
+          },
+          {
+            day: 2,
+            title: "抵達開羅：古文明初探",
+            city: "上海 -> 開羅",
+            coords: { lat: 30.0444, lng: 31.2357 }, // Cairo
+            events: [
+              { 
+                time: "01:00", 
+                type: "flight", 
+                title: "飛往開羅 (MU223)", 
+                desc: "01:00 浦東起飛 - 07:30 抵達開羅。", 
+                location: "Cairo International Airport", 
+                detail: "航班：東方航空 MU223 / 機型：A350-900 / 飛行時間：12小時30分。" 
+              },
+              { time: "09:00", type: "sight", title: "薩拉丁城堡 & 阿里清真寺", desc: "眺望開羅市景，參觀媲美藍色清真寺的阿里清真寺。", location: "Cairo Citadel", detail: "由薩拉丁建於12世紀，內部有華麗的雪花石膏清真寺。" },
+              { time: "14:00", type: "sight", title: "懸空教堂", desc: "建於古羅馬巴比倫城堡之上的最古老教堂。", location: "The Hanging Church", detail: "內部擁有精美的木雕與象牙祭壇，氣氛莊嚴。" },
+              { time: "18:00", type: "hotel", title: "入住飯店", desc: "Helnan Dream Land 或 Hilton Golf 或同級", location: "Cairo", detail: "好好休息，調整時差。" }
+            ]
+          },
+          {
+            day: 3,
+            title: "跨越時空的金字塔",
+            city: "開羅 -> 亞斯文",
+            coords: { lat: 29.9792, lng: 31.1342 }, // Giza
+            events: [
+              { time: "09:00", type: "sight", title: "大埃及博物館 (GEM)", desc: "預計 2025 年正式全區開放，全球最大古埃及博物館。", location: "Grand Egyptian Museum", detail: "位於金字塔旁，展出完整的圖坦卡門陪葬品系列。" },
+              { time: "12:00", type: "food", title: "金字塔景觀午餐", desc: "一邊用餐一邊欣賞古老金字塔。", location: "Giza Plateau", detail: "" },
+              { time: "13:30", type: "sight", title: "吉薩金字塔群", desc: "胡夫、卡夫拉、孟卡拉金字塔與人面獅身像。", location: "Giza Necropolis", detail: "特別安排：騎駱駝體驗，漫步於沙漠之中。" },
+              { 
+                time: "待定", 
+                type: "flight", 
+                title: "國內班機前往亞斯文", 
+                desc: "搭乘國內線班機飛往南部大城亞斯文。", 
+                location: "Aswan", 
+                detail: "實際航班時間依當地航空公司安排為準。" 
+              },
+              { time: "20:00", type: "hotel", title: "入住亞斯文飯店", desc: "Tolip Aswan Hotel 或同級", location: "Tolip Aswan Hotel", detail: "尼羅河畔的五星級飯店。" }
+            ]
+          },
+          {
+            day: 4,
+            title: "努比亞風情與揚帆",
+            city: "亞斯文 (登船)",
+            coords: { lat: 24.0889, lng: 32.8998 }, // Aswan
+            events: [
+              { time: "09:00", type: "sight", title: "菲萊神殿", desc: "供奉愛神伊希斯，有『尼羅河明珠』美譽。", location: "Philae Temple", detail: "搭乘汽船前往阿吉勒基亞島參觀。" },
+              { time: "14:00", type: "sight", title: "努比亞村落巡禮", desc: "騎駱駝拜訪色彩繽紛的部落，享用熱情茶點。", location: "Nubian Village", detail: "體驗努比亞人的熱情與傳統生活方式。" },
+              { time: "16:30", type: "sight", title: "阿拉伯式風帆船", desc: "Felucca 黃昏遊，享受尼羅河的浪漫時刻。", location: "Nile River", detail: "靠著自然風力航行，寧靜而優美。" },
+              { time: "18:00", type: "ship", title: "入住尼羅河遊輪", desc: "Semeramis 2 或同級五星遊輪。", location: "Nile Cruise", detail: "展開為期四天三夜的遊輪之旅，含全包式餐飲。" }
+            ]
+          },
+          {
+            day: 5,
+            title: "阿布辛貝的神蹟",
+            city: "亞斯文 -> 康孟波",
+            coords: { lat: 22.3372, lng: 31.6258 }, // Abu Simbel
+            events: [
+              { time: "04:30", type: "bus", title: "前往阿布辛貝", desc: "清晨跟隨車隊穿越沙漠 (單程約3.5hr)。", location: "Abu Simbel", detail: "為了一睹拉美西斯二世最偉大的建築。" },
+              { time: "08:30", type: "sight", title: "阿布辛貝雙神殿", desc: "巨大的四座法老坐像，聯合國搶救遷移的奇蹟。", location: "Abu Simbel Temples", detail: "包含大神殿(拉美西斯二世)與小神殿(納菲塔莉皇后)。" },
+              { time: "16:00", type: "sight", title: "康孟波雙神殿", desc: "供奉鱷魚神與老鷹神，擁有獨特的雙對稱結構。", location: "Temple of Kom Ombo", detail: "在此可看見古埃及的醫療與手術器具浮雕。" },
+              { time: "Night", type: "ship", title: "遊輪往北航行", desc: "前往艾德福。", location: "Nile River", detail: "享受遊輪設施與晚餐。" }
+            ]
+          },
+          {
+            day: 6,
+            title: "眾神之鄉路克索",
+            city: "艾德福 -> 路克索",
+            coords: { lat: 25.1297, lng: 32.8712 }, // Edfu
+            events: [
+              { time: "08:00", type: "sight", title: "艾德福神殿", desc: "搭乘馬車前往，保存最完好的荷魯斯神殿。", location: "Temple of Edfu", detail: "體驗當地特色交通工具馬車。" },
+              { time: "13:00", type: "sight", title: "伊斯納水閘門", desc: "觀賞遊輪通過水閘門的水位調節過程。", location: "Esna Lock", detail: "小販會將商品拋上甲板叫賣，蔚為奇觀。" },
+              { time: "19:00", type: "sight", title: "路克索神殿", desc: "夜遊神殿，燈光下的古蹟更顯神秘。", location: "Luxor Temple", detail: "位於市中心，可看見清真寺與古神殿共存的畫面。" },
+              { time: "20:30", type: "ship", title: "阿拉伯之夜", desc: "遊輪上舉辦變裝晚會 (Galabeya Party)。", location: "Cruise", detail: "建議在市集或神殿旁購買埃及長袍參加。" }
+            ]
+          },
+          {
+            day: 7,
+            title: "帝王谷與紅海",
+            city: "路克索 -> 虎加達",
+            coords: { lat: 25.7402, lng: 32.6014 }, // Valley of Kings
+            events: [
+              { time: "05:30", type: "optional", title: "(自費) 熱氣球", desc: "清晨升空，俯瞰帝王谷與尼羅河日出。", location: "Luxor West Bank", detail: "一生一次的難得體驗。" },
+              { time: "09:00", type: "sight", title: "帝王谷 & 曼儂巨像", desc: "參觀新王國時期法老的陵墓。", location: "Valley of the Kings", detail: "包含進入三座陵墓參觀，欣賞色彩依舊鮮豔的壁畫。" },
+              { time: "14:00", type: "bus", title: "前往紅海", desc: "驅車前往渡假勝地虎加達。", location: "Hurghada", detail: "享受從沙漠到海洋的景色轉換。" },
+              { time: "18:00", type: "hotel", title: "入住紅海渡假村", desc: "Stella Garden Resort 或同級", location: "Hurghada Resort", detail: "享受全包式渡假村設施。" }
+            ]
+          },
+          {
+            day: 8,
+            title: "紅海蔚藍假期",
+            city: "虎加達 (自由活動)",
+            coords: { lat: 27.2579, lng: 33.8116 }, // Hurghada
+            events: [
+              { time: "All Day", type: "sight", title: "全日自由活動", desc: "享受飯店設施或參加自費行程。", location: "Hurghada", detail: "推薦自費：玻璃底船、沙漠吉普車衝沙、紅海出海遊艇。" },
+              { time: "Optional", type: "optional", title: "(自費) 玻璃底船", desc: "輕鬆欣賞海底珊瑚礁。", location: "Red Sea", detail: "適合不便下水的旅客。" },
+              { time: "Optional", type: "optional", title: "(自費) 沙漠衝沙", desc: "四輪驅動車拜訪貝都因村落。", location: "Eastern Desert", detail: "體驗滑沙與貝都因茶。" }
+            ]
+          },
+          {
+            day: 9,
+            title: "返回開羅與市集",
+            city: "虎加達 -> 開羅",
+            coords: { lat: 30.0444, lng: 31.2357 },
+            events: [
+              { time: "08:00", type: "bus", title: "返回開羅", desc: "沿著紅海海岸公路返回首都。", location: "Cairo", detail: "車程約 5-6 小時。" },
+              { time: "15:00", type: "sight", title: "莎草紙 & 香精油工廠", desc: "參觀古埃及造紙術與天然香精製作。", location: "Giza", detail: "了解古文明的工藝傳承。" },
+              { time: "17:00", type: "sight", title: "哈利利市集", desc: "最古老的傳統市集，迷宮般的巷弄。", location: "Khan el-Khalili", detail: "必買：神燈、香料、紀念品。請享受殺價樂趣。" },
+              { time: "19:00", type: "hotel", title: "入住飯店", desc: "Hilton Grand Nile Tower 或同級", location: "Cairo", detail: "在埃及的最後一晚。" }
+            ]
+          },
+          {
+            day: 10,
+            title: "再見，埃及",
+            city: "開羅 -> 上海",
+            coords: { lat: 30.1124, lng: 31.4005 }, // Cairo Airport
+            events: [
+              { time: "09:00", type: "bus", title: "前往機場", desc: "帶著滿滿回憶前往開羅機場。", location: "Cairo International Airport", detail: "辦理登機與出境手續。" },
+              { 
+                time: "13:00", 
+                type: "flight", 
+                title: "飛往浦東 (MU224)", 
+                desc: "13:00 開羅起飛 - 05:20(+1) 抵達浦東。", 
+                location: "On Board", 
+                detail: "航班：東方航空 MU224 / 機型：A350-900 / 飛行時間：10小時20分。" 
+              }
+            ]
+          },
+          {
+            day: 11,
+            title: "上海巡禮與返家",
+            city: "上海 -> 台北",
+            coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
+            events: [
+              { time: "05:20", type: "flight", title: "抵達上海", desc: "清晨抵達浦東機場，入境轉機半日遊。", location: "Pudong Airport", detail: "入境中國進行轉機半日遊。" },
+              { time: "09:00", type: "sight", title: "豫園 & 新天地", desc: "遊覽上海著名景點。", location: "Shanghai", detail: "感受海派文化與石庫門建築。" },
+              { time: "13:00", type: "bus", title: "磁浮列車", desc: "搭乘高速磁浮列車返回機場。", location: "Longyang Road Station", detail: "體驗時速300公里以上的快感。" },
+              { 
+                time: "15:45", 
+                type: "flight", 
+                title: "飛往台北 (MU5005)", 
+                desc: "15:45 浦東起飛 - 17:40 抵達桃園。", 
+                location: "Taoyuan Airport", 
+                detail: "航班：東方航空 MU5005 / 機型：A330 / 飛行時間：1小時55分。" 
+              }
+            ]
+          }
+        ];
+
+        // --- Mock Data: 台灣人旅遊注意事項 ---
+        const twTips = [
+          { icon: <DollarSign size={18} />, title: "小費文化 (Baksheesh)", text: "埃及是小費國家。上廁所約 10-20 EGP，提行李約 1 USD/次。建議多換些 1 美元紙鈔或小額埃鎊。" },
+          { icon: <Utensils size={18} />, title: "飲食飲水", text: "絕對不要飲用生水(含漱口)，請喝瓶裝水。生菜沙拉建議少吃，以免腸胃不適。建議自備腸胃藥。" },
+          { icon: <Sun size={18} />, title: "氣候穿著", text: "早晚溫差大，沙漠氣候乾燥。請洋蔥式穿搭，並攜帶帽子、墨鏡、高係數防曬乳。參觀清真寺女性需包頭巾。" },
+          { icon: <Info size={18} />, title: "購物殺價", text: "在觀光區(如市集)購物，請從開價的 3-5 折開始殺價。堅持底線，態度友善但堅定。" },
+          { icon: <Plane size={18} />, title: "簽證", text: "台灣護照持有人可於抵達埃及機場時辦理落地簽證 (25 USD)。" },
+        ];
+
+        // --- Mock Data: 伴手禮資料 ---
+        const souvenirData = [
+          {
+            id: 1,
+            name: "莎草紙畫 (Papyrus)",
+            desc: "古埃及流傳千年的造紙工藝，繪有諸神傳說或生活場景。請認明不易折斷、有韌性的正版莎草紙。",
+            image: "https://images.unsplash.com/photo-1566230948955-d9cb75082042?auto=format&fit=crop&q=80&w=800",
+            tips: "購買時可測試紙張韌性，正版不易折斷。市集價格混亂，建議至正規畫廊或工廠選購。"
+          },
+          {
+            id: 2,
+            name: "埃及香精 (Perfume Essence)",
+            desc: "埃及是許多國際名牌香水的原料產地。純正香精不含酒精，留香時間長。",
+            image: "https://images.unsplash.com/photo-1595123550441-d377e017de2a?auto=format&fit=crop&q=80&w=800",
+            tips: "蓮花(Lotus)與紙莎草(Papyrus)是經典國花香味；『沙漠的秘密』也是熱門款。"
+          },
+          {
+            id: 3,
+            name: "椰棗 (Dates)",
+            desc: "沙漠中的麵包，營養價值極高。口感軟糯甜蜜，包杏仁或核桃的款式最受歡迎。",
+            image: "https://images.unsplash.com/photo-1582234032609-0d86e92f3a62?auto=format&fit=crop&q=80&w=800",
+            tips: "超市購買包裝好的比較衛生，Aswan 市集的乾貨品質也很棒。"
+          },
+          {
+            id: 4,
+            name: "芙蓉花茶 (Hibiscus/Karkade)",
+            desc: "埃及國民飲料，富含維他命C，呈現美麗的寶石紅。冷熱飲皆宜，酸甜開胃。",
+            image: "https://images.unsplash.com/photo-1576092768241-dec231847233?auto=format&fit=crop&q=80&w=800",
+            tips: "Aswan 的芙蓉花品質被認為是最好的。"
+          },
+          {
+            id: 5,
+            name: "雪花石膏 (Alabaster)",
+            desc: "路克索特產，質地細緻透光。常被雕刻成神像、花瓶或燭台。",
+            image: "https://images.unsplash.com/photo-1544525890-59fc6c55940c?auto=format&fit=crop&q=80&w=800",
+            tips: "手工製品通常不完美，機器製品則過於平滑。白色透光度高者為佳。"
+          },
+          {
+            id: 6,
+            name: "Nefertari 手工皂",
+            desc: "埃及頂級天然保養品牌，使用埃及在地原料（如羊奶、蜂蜜）製作。",
+            image: "https://images.unsplash.com/photo-1600857062241-98e5dba7f214?auto=format&fit=crop&q=80&w=800",
+            tips: "機場或百貨商場有專櫃，價格固定，不用殺價。"
+          }
+        ];
+
+        // --- Sub-components ---
+
+        const IconWrapper = ({ type }) => {
+          const baseClass = "p-2 rounded-full text-white shadow-md";
+          switch (type) {
+            case 'flight': return <div className={`${baseClass} bg-blue-500`}><Plane size={20} /></div>;
+            case 'food': return <div className={`${baseClass} bg-orange-500`}><Utensils size={20} /></div>;
+            case 'sight': return <div className={`${baseClass} bg-yellow-600`}><Camera size={20} /></div>;
+            case 'hotel': return <div className={`${baseClass} bg-indigo-500`}><Moon size={20} /></div>;
+            case 'bus': return <div className={`${baseClass} bg-green-600`}><Bus size={20} /></div>;
+            case 'ship': return <div className={`${baseClass} bg-cyan-600`}><Ship size={20} /></div>;
+            case 'optional': return <div className={`${baseClass} bg-purple-500`}><DollarSign size={20} /></div>;
+            default: return <div className={`${baseClass} bg-gray-500`}><MapPin size={20} /></div>;
+          }
+        };
+
+        const Modal = ({ isOpen, onClose, data }) => {
+          if (!isOpen || !data) return null;
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative animate-slide-up">
+                {/* Header Image Placeholder */}
+                <div className="h-32 bg-gradient-to-r from-yellow-600 to-yellow-800 flex items-center justify-center relative">
+                  <h3 className="text-white text-2xl font-bold px-4 text-center drop-shadow-md">{data.title}</h3>
+                  <button 
+                    onClick={onClose}
+                    className="absolute top-3 right-3 bg-white/20 hover:bg-white/40 rounded-full p-1 text-white transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center text-gray-600 mb-2">
+                    <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm font-bold mr-3">{data.time}</span>
+                    <span className="text-sm border border-gray-300 px-2 py-0.5 rounded-full">{data.type.toUpperCase()}</span>
+                  </div>
+                  
+                  <p className="text-gray-700 leading-relaxed">
+                    {data.desc}
+                  </p>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                    <h4 className="text-yellow-800 font-bold mb-2 flex items-center">
+                      <Info size={16} className="mr-2" /> 詳細資訊
+                    </h4>
+                    <p className="text-sm text-gray-700">{data.detail || "暫無詳細資訊。"}</p>
+                  </div>
+
+                  <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Navigation size={18} />
+                    開啟 Google Maps 導航
+                  </a>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const TipsModal = ({ isOpen, onClose }) => {
+          if (!isOpen) return null;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl relative max-h-[80vh] flex flex-col">
+                <div className="bg-teal-700 p-4 flex justify-between items-center sticky top-0 z-10">
+                  <h3 className="text-white text-lg font-bold flex items-center gap-2">
+                    <span className="text-xl">🇹🇼</span> 台灣旅客埃及教戰守則
+                  </h3>
+                  <button onClick={onClose} className="text-white/80 hover:text-white"><X size={24}/></button>
+                </div>
+                <div className="p-5 overflow-y-auto space-y-4">
+                  {twTips.map((tip, idx) => (
+                    <div key={idx} className="flex gap-4 p-3 border-b border-gray-100 last:border-0">
+                      <div className="text-teal-600 mt-1 shrink-0">{tip.icon}</div>
+                      <div>
+                        <h4 className="font-bold text-gray-800">{tip.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">{tip.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // --- Main Component ---
+
+        function EgyptApp() {
+          const [activeTab, setActiveTab] = useState('timeline'); // 'timeline' or 'map' or 'illustrations' or 'souvenirs'
+          const [currentDay, setCurrentDay] = useState(1);
+          const [isHeroOpen, setIsHeroOpen] = useState(true);
+          const [weather, setWeather] = useState({ temp: '--', condition: 'Loading...' });
+          const [rate, setRate] = useState('Loading...');
+          const [modalData, setModalData] = useState(null);
+          const [isTipsOpen, setIsTipsOpen] = useState(false);
+          
+          // Refs for scrolling
+          const timelineRef = useRef(null);
+
+          // Simulated API Calls
+          useEffect(() => {
+            // Mock Weather API
+            const timer = setTimeout(() => {
+              setWeather({ temp: '32°C', condition: '晴朗乾燥' });
+              setRate('1 EGP ≈ 0.65 TWD');
+            }, 1000);
+            return () => clearTimeout(timer);
+          }, []);
+
+          const handleCardClick = (event) => {
+            setModalData(event);
+          };
+
+          const handleMapMarkerClick = (day) => {
+            setCurrentDay(day);
+            setActiveTab('timeline');
+            // Simple logic to scroll to top when switching
+            if (timelineRef.current) timelineRef.current.scrollTop = 0;
+          };
+
+          const currentItinerary = itineraryData.find(d => d.day === currentDay);
+
+          // --- Render Functions ---
+
+          const renderTimeline = () => (
+            <div className="pb-24 pt-2 px-2" ref={timelineRef}>
+              {/* Day Selector Strip */}
+              <div className="flex overflow-x-auto py-3 gap-2 px-2 mb-2 no-scrollbar snap-x">
+                {itineraryData.map((d) => (
+                  <button
+                    key={d.day}
+                    onClick={() => setCurrentDay(d.day)}
+                    className={`snap-center shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-sm
+                      ${currentDay === d.day 
+                        ? 'bg-yellow-600 text-white scale-105 ring-2 ring-yellow-300' 
+                        : 'bg-white text-gray-500 border border-gray-200'}`}
+                  >
+                    Day {d.day}
+                  </button>
+                ))}
+              </div>
+
+              {/* Day Header */}
+              <div className="bg-white rounded-xl p-4 shadow-sm mb-6 border-l-4 border-yellow-500 mx-2">
+                <h2 className="text-2xl font-bold text-gray-800">Day {currentDay}</h2>
+                <p className="text-gray-500 font-medium">{currentItinerary.title}</p>
+                <div className="flex items-center text-xs text-gray-400 mt-2">
+                  <MapPin size={12} className="mr-1" />
+                  {currentItinerary.city}
+                </div>
+              </div>
+
+              {/* Vertical Timeline */}
+              <div className="relative pl-4 pr-2 space-y-8">
+                {/* Vertical Line */}
+                <div className="absolute left-[27px] top-2 bottom-0 w-0.5 bg-gray-200 -z-10"></div>
+
+                {currentItinerary.events.map((event, index) => (
+                  <div 
+                    key={index} 
+                    className="relative flex items-start gap-4 animate-fade-in-up"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                    onClick={() => handleCardClick(event)}
+                  >
+                    {/* Time Column */}
+                    <div className="flex flex-col items-center min-w-[50px] pt-1 bg-gray-50/80 backdrop-blur rounded p-1 z-0">
+                      <span className="text-xs font-bold text-gray-800">{event.time}</span>
+                    </div>
+
+                    {/* Icon Node */}
+                    <div className="absolute left-[17px] top-1 z-10 bg-gray-50 rounded-full p-1 border border-white">
+                      <IconWrapper type={event.type} />
+                    </div>
+
+                    {/* Card */}
+                    <div className="flex-1 bg-white rounded-xl p-4 shadow-md border border-gray-100 active:scale-[0.98] transition-transform cursor-pointer hover:shadow-lg ml-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-bold text-gray-800 text-lg leading-tight">{event.title}</h3>
+                      </div>
+                      <p className="text-gray-500 text-sm mt-1 line-clamp-2">{event.desc}</p>
+                      
+                      {/* Chips */}
+                      <div className="flex gap-2 mt-3">
+                        {event.location && (
+                          <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-full flex items-center">
+                            <MapPin size={10} className="mr-1" /> {event.location}
+                          </span>
+                        )}
+                        <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+                          點擊詳情
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* End of Day Marker */}
+                <div className="flex items-center gap-4 pt-4">
+                   <div className="w-[50px] flex justify-center">
+                     <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                   </div>
+                   <div className="text-gray-400 text-sm italic">End of Day {currentDay}</div>
+                </div>
+              </div>
+            </div>
+          );
+
+          const renderSchematicMap = () => (
+            <div className="h-full bg-[#fcf9f2] flex flex-col">
+               {/* Google Map Iframe */}
+               <div className="w-full h-1/2 bg-gray-200 relative">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    scrolling="no" 
+                    marginHeight="0" 
+                    marginWidth="0" 
+                    src={`https://maps.google.com/maps?q=${currentItinerary.coords.lat},${currentItinerary.coords.lng}&hl=zh-TW&z=10&output=embed`}
+                    title="Google Map"
+                  ></iframe>
+                  <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-xs rounded shadow">
+                    {currentItinerary.city}
+                  </div>
+               </div>
+
+               {/* Schematic List */}
+               <div className="flex-1 overflow-y-auto p-6 pb-24">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4">行程地圖導覽</h2>
+                  <div className="relative border-l-2 border-yellow-400 ml-4 space-y-8">
+                    {itineraryData.map((day) => (
+                       <div 
+                         key={day.day} 
+                         className={`relative pl-6 cursor-pointer group transition-all ${currentDay === day.day ? 'opacity-100 scale-105' : 'opacity-60 hover:opacity-100'}`}
+                         onClick={() => setCurrentDay(day.day)}
+                       >
+                         {/* Dot */}
+                         <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${currentDay === day.day ? 'bg-blue-600 scale-125' : 'bg-yellow-500'}`}></div>
+                         
+                         {/* Content */}
+                         <div>
+                           <span className="text-xs font-bold text-yellow-600 uppercase">Day {day.day}</span>
+                           <h3 className="font-bold text-gray-800">{day.city.split('->')[0]}</h3>
+                           <p className="text-xs text-gray-500 truncate">{day.title}</p>
+                         </div>
+                         
+                         {/* Jump Button (only visible if active) */}
+                         {currentDay === day.day && (
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleMapMarkerClick(day.day);
+                             }}
+                             className="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-sm hover:bg-blue-700"
+                           >
+                             查看行程 <List size={12} />
+                           </button>
+                         )}
+                       </div>
+                    ))}
+                  </div>
+               </div>
+            </div>
+          );
+
+          const renderIllustrations = () => (
+            <div className="h-full bg-[#fcf9f2] pb-24 overflow-y-auto">
+              <div className="p-4 space-y-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 px-2">行程手繪插圖</h2>
+                
+                {/* Day 1-6 Illustration */}
+                <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
+                   <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
+                     <Calendar size={20} />
+                     上篇：Day 1-6
+                   </h3>
+                   <img 
+                     src="Egypt_Day_01-06.png" 
+                     alt="Egypt Itinerary Day 1-6 Illustration" 
+                     className="w-full h-auto rounded-lg object-contain bg-gray-100 min-h-[200px]"
+                     onError={(e) => {
+                       e.target.onerror = null; 
+                       e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(Egypt_Day_01-06.png)';
+                     }}
+                   />
+                </div>
+
+                {/* Day 7-11 Illustration */}
+                <div className="bg-white p-2 rounded-xl shadow-md overflow-hidden">
+                   <h3 className="text-lg font-bold text-yellow-600 mb-2 px-2 flex items-center gap-2">
+                     <Calendar size={20} />
+                     下篇：Day 7-11
+                   </h3>
+                   <img 
+                     src="Egypt_Day_07-11.png" 
+                     alt="Egypt Itinerary Day 7-11 Illustration" 
+                     className="w-full h-auto rounded-lg object-contain bg-gray-100 min-h-[200px]"
+                     onError={(e) => {
+                       e.target.onerror = null; 
+                       e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(Egypt_Day_07-11.png)';
+                     }}
+                   />
+                </div>
+
+                <p className="text-center text-gray-400 text-sm italic">
+                   * 圖片僅供參考，實際行程請以文字說明為準
+                </p>
+              </div>
+            </div>
+          );
+
+          const renderSouvenirs = () => (
+            <div className="h-full bg-[#fcf9f2] pb-24 overflow-y-auto">
+              <div className="p-4 space-y-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2 px-2">埃及必買伴手禮</h2>
+                <p className="text-sm text-gray-500 px-2 mb-4">把千年文明的回憶帶回家</p>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {souvenirData.map((item) => (
+                    <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
+                      <div className="h-40 w-full bg-gray-200 relative">
+                         <img 
+                            src={item.image} 
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                         />
+                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                           <h3 className="text-white font-bold text-lg">{item.name}</h3>
+                         </div>
+                      </div>
+                      <div className="p-4">
+                        <p className="text-gray-700 text-sm mb-3 leading-relaxed">{item.desc}</p>
+                        <div className="bg-yellow-50 p-2 rounded border border-yellow-100 flex items-start gap-2">
+                           <Info size={14} className="text-yellow-600 mt-1 shrink-0" />
+                           <p className="text-xs text-yellow-800">{item.tips}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+
+          return (
+            <div className="max-w-md mx-auto h-screen bg-gray-50 flex flex-col relative font-sans text-gray-900 overflow-hidden border-x border-gray-200 shadow-2xl">
+              
+              {/* 1. Hero Section - Collapsible Drawer Style */}
+              <div 
+                className={`bg-slate-900 bg-cover bg-center text-white transition-all duration-300 ease-in-out z-20 shadow-md flex flex-col shrink-0 ${isHeroOpen ? 'max-h-80' : 'max-h-[84px]'}`}
+                style={{ backgroundImage: `url('Egypt_Banner.png')` }}
+              >
+                <div className="bg-black/40 w-full h-full flex flex-col">
+                  <div className="p-4 flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                         <span className="bg-yellow-500 text-xs font-bold px-2 py-0.5 rounded text-black">EGYPT</span>
+                         <h1 className="font-bold text-lg tracking-wide drop-shadow-md">尼羅河傳說 {itineraryData.length} 日遊</h1>
+                      </div>
+                      <div className="flex gap-3">
+                         <button onClick={() => setIsTipsOpen(true)} className="bg-black/30 backdrop-blur-sm p-2 rounded-full hover:bg-black/50 transition-colors border border-white/20">
+                            <span className="text-sm font-bold">🇹🇼 TIPS</span>
+                         </button>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Content */}
+                    <div className={`mt-4 space-y-4 transition-opacity duration-300 ${isHeroOpen ? 'opacity-100' : 'opacity-0'}`}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-black/40 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+                          <div className="flex items-center text-yellow-400 mb-1">
+                            <Sun size={16} className="mr-1" />
+                            <span className="text-xs font-bold">目前天氣</span>
+                          </div>
+                          <div className="text-2xl font-bold">{weather.temp}</div>
+                          <div className="text-xs text-gray-300">{weather.condition}</div>
+                        </div>
+                        <div className="bg-black/40 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+                          <div className="flex items-center text-green-400 mb-1">
+                            <DollarSign size={16} className="mr-1" />
+                            <span className="text-xs font-bold">參考匯率</span>
+                          </div>
+                          <div className="text-sm font-medium mt-1">{rate}</div>
+                          <div className="text-[10px] text-gray-400 mt-1">請準備小額美金</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center text-xs text-gray-300 bg-black/30 w-fit px-2 py-1 rounded backdrop-blur-sm">
+                         <MapPin size={12} className="mr-1" /> 
+                         <span>現在位置: {activeTab === 'timeline' ? itineraryData[currentDay-1].city : '全覽模式'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toggle Handle Bar */}
+                  <button 
+                     onClick={() => setIsHeroOpen(!isHeroOpen)}
+                     className="h-6 w-full flex items-center justify-center bg-black/40 hover:bg-black/60 transition-colors cursor-pointer active:bg-black/70 border-t border-white/10 backdrop-blur-sm"
+                  >
+                     {isHeroOpen ? <ChevronUp size={16} className="text-white/80" /> : <ChevronDown size={16} className="text-white/80" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="flex-1 overflow-y-auto bg-gray-50 relative scroll-smooth">
+                {activeTab === 'timeline' ? renderTimeline() : 
+                 activeTab === 'map' ? renderSchematicMap() : 
+                 activeTab === 'illustrations' ? renderIllustrations() :
+                 renderSouvenirs()}
+              </div>
+
+              {/* 3. Bottom Navigation */}
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 flex justify-around items-center z-30 pb-safe">
+                <button 
+                  onClick={() => setActiveTab('timeline')}
+                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'timeline' ? 'text-yellow-600' : 'text-gray-400'}`}
+                >
+                  <List size={22} />
+                  <span className="text-[10px] font-bold">每日行程</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActiveTab('illustrations')}
+                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'illustrations' ? 'text-yellow-600' : 'text-gray-400'}`}
+                >
+                  <ImageIcon size={22} />
+                  <span className="text-[10px] font-bold">插圖</span>
+                </button>
+
+                {/* Floating Action Button Style Center */}
+                <div className="relative -top-6">
+                  <button 
+                     className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full shadow-xl flex items-center justify-center text-white border-4 border-gray-50 transform active:scale-95 transition-transform"
+                     onClick={() => {
+                        setActiveTab('timeline');
+                        setCurrentDay(1); // Reset to day 1 or current real date logic
+                     }}
+                  >
+                     <Plane size={24} />
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => setActiveTab('souvenirs')}
+                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'souvenirs' ? 'text-yellow-600' : 'text-gray-400'}`}
+                >
+                  <ShoppingBag size={22} />
+                  <span className="text-[10px] font-bold">伴手禮</span>
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('map')}
+                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'map' ? 'text-yellow-600' : 'text-gray-400'}`}
+                >
+                  <MapIcon size={22} />
+                  <span className="text-[10px] font-bold">總覽地圖</span>
+                </button>
+              </div>
+
+              {/* Modals */}
+              <Modal 
+                isOpen={!!modalData} 
+                data={modalData} 
+                onClose={() => setModalData(null)} 
+              />
+              
+              <TipsModal 
+                isOpen={isTipsOpen} 
+                onClose={() => setIsTipsOpen(false)} 
+              />
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<EgyptApp />);
+    </script>
+</body>
+</html>
