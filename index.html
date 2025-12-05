@@ -109,6 +109,7 @@
         const itineraryData = [
           {
             day: 1,
+            date: "2026/03/10 (二)",
             title: "啟程：台北前往上海",
             city: "台北 -> 上海 (轉機)",
             coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
@@ -126,6 +127,7 @@
           },
           {
             day: 2,
+            date: "2026/03/11 (三)",
             title: "抵達開羅：古文明初探",
             city: "上海 -> 開羅",
             coords: { lat: 30.0444, lng: 31.2357 }, // Cairo
@@ -145,6 +147,7 @@
           },
           {
             day: 3,
+            date: "2026/03/12 (四)",
             title: "跨越時空的金字塔",
             city: "開羅 -> 亞斯文",
             coords: { lat: 29.9792, lng: 31.1342 }, // Giza
@@ -165,6 +168,7 @@
           },
           {
             day: 4,
+            date: "2026/03/13 (五)",
             title: "努比亞風情與揚帆",
             city: "亞斯文 (登船)",
             coords: { lat: 24.0889, lng: 32.8998 }, // Aswan
@@ -177,6 +181,7 @@
           },
           {
             day: 5,
+            date: "2026/03/14 (六)",
             title: "阿布辛貝的神蹟",
             city: "亞斯文 -> 康孟波",
             coords: { lat: 22.3372, lng: 31.6258 }, // Abu Simbel
@@ -189,6 +194,7 @@
           },
           {
             day: 6,
+            date: "2026/03/15 (日)",
             title: "眾神之鄉路克索",
             city: "艾德福 -> 路克索",
             coords: { lat: 25.1297, lng: 32.8712 }, // Edfu
@@ -201,6 +207,7 @@
           },
           {
             day: 7,
+            date: "2026/03/16 (一)",
             title: "帝王谷與紅海",
             city: "路克索 -> 虎加達",
             coords: { lat: 25.7402, lng: 32.6014 }, // Valley of Kings
@@ -213,6 +220,7 @@
           },
           {
             day: 8,
+            date: "2026/03/17 (二)",
             title: "紅海蔚藍假期",
             city: "虎加達 (自由活動)",
             coords: { lat: 27.2579, lng: 33.8116 }, // Hurghada
@@ -224,6 +232,7 @@
           },
           {
             day: 9,
+            date: "2026/03/18 (三)",
             title: "返回開羅與市集",
             city: "虎加達 -> 開羅",
             coords: { lat: 30.0444, lng: 31.2357 },
@@ -236,6 +245,7 @@
           },
           {
             day: 10,
+            date: "2026/03/19 (四)",
             title: "再見，埃及",
             city: "開羅 -> 上海",
             coords: { lat: 30.1124, lng: 31.4005 }, // Cairo Airport
@@ -253,6 +263,7 @@
           },
           {
             day: 11,
+            date: "2026/03/20 (五)",
             title: "上海巡禮與返家",
             city: "上海 -> 台北",
             coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
@@ -557,7 +568,10 @@
 
               {/* Day Header */}
               <div className="bg-white rounded-xl p-4 shadow-sm mb-6 border-l-4 border-yellow-500 mx-2">
-                <h2 className="text-2xl font-bold text-gray-800">Day {currentDay}</h2>
+                <div className="flex justify-between items-baseline mb-1">
+                    <h2 className="text-2xl font-bold text-gray-800">Day {currentDay}</h2>
+                    <span className="text-sm font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded">{currentItinerary.date}</span>
+                </div>
                 <p className="text-gray-500 font-medium">{currentItinerary.title}</p>
                 <div className="flex items-center text-xs text-gray-400 mt-2">
                   <MapPin size={12} className="mr-1" />
