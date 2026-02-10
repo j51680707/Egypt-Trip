@@ -104,6 +104,9 @@
         const ImageIcon = (props) => <IconBase {...props}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></IconBase>;
         const ShoppingBag = (props) => <IconBase {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></IconBase>;
         const Calculator = (props) => <IconBase {...props}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>;
+        const BatteryCharging = (props) => <IconBase {...props}><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"/><line x1="23" x2="23" y1="13" y2="11"/><polyline points="11 6 7 12 13 12 9 18"/></IconBase>;
+        const Wifi = (props) => <IconBase {...props}><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/></IconBase>;
+        const Hash = (props) => <IconBase {...props}><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></IconBase>;
 
         // --- Mock Data: 行程資料 ---
         const itineraryData = [
@@ -114,6 +117,14 @@
             city: "台北 -> 上海 (轉機)",
             coords: { lat: 31.2304, lng: 121.4737 }, // Shanghai
             events: [
+              { 
+                time: "12:30", 
+                type: "sight", 
+                title: "機場集合", 
+                desc: "桃園機場第二航廈 東方航空公司團體櫃檯 (中華航空代理7號團體櫃檯後方)。", 
+                location: "Taoyuan Airport T2", 
+                detail: "領隊：陳怡盧(RURU) / 0933-858-680。" 
+              },
               { 
                 time: "15:00", 
                 type: "flight", 
@@ -142,7 +153,7 @@
               },
               { time: "09:00", type: "sight", title: "薩拉丁城堡 & 阿里清真寺", desc: "眺望開羅市景，參觀媲美藍色清真寺的阿里清真寺。", location: "Cairo Citadel", detail: "由薩拉丁建於12世紀，內部有華麗的雪花石膏清真寺。" },
               { time: "14:00", type: "sight", title: "懸空教堂", desc: "建於古羅馬巴比倫城堡之上的最古老教堂。", location: "The Hanging Church", detail: "內部擁有精美的木雕與象牙祭壇，氣氛莊嚴。" },
-              { time: "18:00", type: "hotel", title: "入住飯店", desc: "Helnan Dream Land 或 Hilton Golf 或同級", location: "Cairo", detail: "好好休息，調整時差。" }
+              { time: "18:00", type: "hotel", title: "入住飯店", desc: "Hilton Nile Tower (五星)", location: "Hilton Nile Tower", detail: "好好休息，調整時差。" }
             ]
           },
           {
@@ -156,14 +167,14 @@
               { time: "12:00", type: "food", title: "金字塔景觀午餐", desc: "一邊用餐一邊欣賞古老金字塔。", location: "Giza Plateau", detail: "" },
               { time: "13:30", type: "sight", title: "吉薩金字塔群", desc: "胡夫、卡夫拉、孟卡拉金字塔與人面獅身像。", location: "Giza Necropolis", detail: "特別安排：騎駱駝體驗，漫步於沙漠之中。" },
               { 
-                time: "待定", 
+                time: "22:00", 
                 type: "flight", 
-                title: "國內班機前往亞斯文", 
-                desc: "搭乘國內線班機飛往南部大城亞斯文。", 
-                location: "Aswan", 
-                detail: "實際航班時間依當地航空公司安排為準。" 
+                title: "飛往亞斯文 (MS80)", 
+                desc: "22:00 開羅起飛 - 23:25 抵達亞斯文。", 
+                location: "Cairo International Airport", 
+                detail: "航班：埃及航空 MS80。" 
               },
-              { time: "20:00", type: "hotel", title: "入住亞斯文飯店", desc: "Tolip Aswan Hotel 或同級", location: "Tolip Aswan Hotel", detail: "尼羅河畔的五星級飯店。" }
+              { time: "23:50", type: "hotel", title: "入住亞斯文飯店", desc: "Tolip Aswan Hotel (五星)", location: "Tolip Aswan Hotel", detail: "尼羅河畔的五星級飯店。" }
             ]
           },
           {
@@ -176,7 +187,7 @@
               { time: "09:00", type: "sight", title: "菲萊神殿", desc: "供奉愛神伊希斯，有『尼羅河明珠』美譽。", location: "Philae Temple", detail: "搭乘汽船前往阿吉勒基亞島參觀。" },
               { time: "14:00", type: "sight", title: "努比亞村落巡禮", desc: "騎駱駝拜訪色彩繽紛的部落，享用熱情茶點。", location: "Nubian Village", detail: "體驗努比亞人的熱情與傳統生活方式。" },
               { time: "16:30", type: "sight", title: "阿拉伯式風帆船", desc: "Felucca 黃昏遊，享受尼羅河的浪漫時刻。", location: "Nile River", detail: "靠著自然風力航行，寧靜而優美。" },
-              { time: "18:00", type: "ship", title: "入住尼羅河遊輪", desc: "Semeramis 2 或同級五星遊輪。", location: "Nile Cruise", detail: "展開為期四天三夜的遊輪之旅，含全包式餐飲。" }
+              { time: "18:00", type: "ship", title: "入住尼羅河遊輪", desc: "MS Concerto Plus (五星)", location: "MS Concerto Plus", detail: "展開為期四天三夜的遊輪之旅，含全包式餐飲。" }
             ]
           },
           {
@@ -215,7 +226,7 @@
               { time: "05:30", type: "optional", title: "(自費) 熱氣球", desc: "清晨升空，俯瞰帝王谷與尼羅河日出。", location: "Luxor West Bank", detail: "一生一次的難得體驗。" },
               { time: "09:00", type: "sight", title: "帝王谷 & 曼儂巨像", desc: "參觀新王國時期法老的陵墓。", location: "Valley of the Kings", detail: "包含進入三座陵墓參觀，欣賞色彩依舊鮮豔的壁畫。" },
               { time: "14:00", type: "bus", title: "前往紅海", desc: "驅車前往渡假勝地虎加達。", location: "Hurghada", detail: "享受從沙漠到海洋的景色轉換。" },
-              { time: "18:00", type: "hotel", title: "入住紅海渡假村", desc: "Stella Garden Resort 或同級", location: "Hurghada Resort", detail: "享受全包式渡假村設施。" }
+              { time: "18:00", type: "hotel", title: "入住紅海渡假村", desc: "Desert Rose (五星)", location: "Desert Rose Resort", detail: "享受全包式渡假村設施。" }
             ]
           },
           {
@@ -240,7 +251,7 @@
               { time: "08:00", type: "bus", title: "返回開羅", desc: "沿著紅海海岸公路返回首都。", location: "Cairo", detail: "車程約 5-6 小時。" },
               { time: "15:00", type: "sight", title: "莎草紙 & 香精油工廠", desc: "參觀古埃及造紙術與天然香精製作。", location: "Giza", detail: "了解古文明的工藝傳承。" },
               { time: "17:00", type: "sight", title: "哈利利市集", desc: "最古老的傳統市集，迷宮般的巷弄。", location: "Khan el-Khalili", detail: "必買：神燈、香料、紀念品。請享受殺價樂趣。" },
-              { time: "19:00", type: "hotel", title: "入住飯店", desc: "Hilton Grand Nile Tower 或同級", location: "Cairo", detail: "在埃及的最後一晚。" }
+              { time: "19:00", type: "hotel", title: "入住飯店", desc: "Hilton Nile Tower (五星)", location: "Hilton Nile Tower", detail: "在埃及的最後一晚。" }
             ]
           },
           {
@@ -285,6 +296,8 @@
 
         // --- Mock Data: 台灣人旅遊注意事項 ---
         const twTips = [
+          { icon: <BatteryCharging size={18} />, title: "行動電源 (重要!)", text: "經中國轉機，行動電源必須有標示規格且具備『3C認證標誌』，否則會被海關沒收。嚴禁托運，務必隨身攜帶。" },
+          { icon: <Wifi size={18} />, title: "網路", text: "本團贈送一張 10G 網卡 (當地領取)。" },
           { icon: <DollarSign size={18} />, title: "小費文化 (Baksheesh)", text: "埃及是小費國家。上廁所約 10-20 EGP，提行李約 1 USD/次。建議多換些 1 美元紙鈔或小額埃鎊。" },
           { icon: <Utensils size={18} />, title: "飲食飲水", text: "絕對不要飲用生水(含漱口)，請喝瓶裝水。生菜沙拉建議少吃，以免腸胃不適。建議自備腸胃藥。" },
           { icon: <Sun size={18} />, title: "氣候穿著", text: "早晚溫差大，沙漠氣候乾燥。請洋蔥式穿搭，並攜帶帽子、墨鏡、高係數防曬乳。參觀清真寺女性需包頭巾。" },
@@ -819,6 +832,32 @@
             </div>
           );
 
+          const renderNumbers = () => (
+            <div className="h-full bg-[#fcf9f2] pb-24 overflow-y-auto">
+              <div className="p-4 space-y-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2 px-2">埃及數字對照表</h2>
+                <p className="text-sm text-gray-500 px-2 mb-4">看懂車牌、價錢必備</p>
+                
+                <div className="bg-white p-4 rounded-xl shadow-md">
+                   <img 
+                     src="EGYPT_NUMBER.jpg" 
+                     alt="埃及數字對照表" 
+                     className="w-full h-auto rounded-lg object-contain"
+                     onError={(e) => {
+                       e.target.onerror = null; 
+                       e.target.src='https://placehold.co/600x800/fcf9f2/333?text=Image+Not+Found%0A(EGYPT_NUMBER.jpg)';
+                     }}
+                   />
+                   <div className="mt-4 text-sm text-gray-600 space-y-2">
+                      <p>上排：阿拉伯文數字 (埃及通用)</p>
+                      <p>下排：我們熟悉的阿拉伯數字</p>
+                      <p className="text-xs text-gray-400 mt-2">* 埃及雖然主要使用阿拉伯文，但在觀光區也會標示我們熟悉的數字。學會辨識這 0-9 個符號，對於看車牌、商店標價非常有幫助！</p>
+                   </div>
+                </div>
+              </div>
+            </div>
+          );
+
           return (
             <div className="max-w-md mx-auto h-screen bg-gray-50 flex flex-col relative font-sans text-gray-900 overflow-hidden border-x border-gray-200 shadow-2xl">
               
@@ -827,6 +866,7 @@
                 className={`bg-slate-900 bg-cover bg-center text-white transition-all duration-300 ease-in-out z-20 shadow-md flex flex-col shrink-0 ${isHeroOpen ? 'max-h-80' : 'max-h-[84px]'}`}
                 style={{ backgroundImage: `url('Egypt_Banner.png')` }}
               >
+                {/* ... existing hero content ... */}
                 <div className="bg-black/40 w-full h-full flex flex-col">
                   <div className="p-4 flex-1 overflow-hidden">
                     <div className="flex justify-between items-center">
@@ -887,58 +927,68 @@
                 {activeTab === 'timeline' ? renderTimeline() : 
                  activeTab === 'map' ? renderSchematicMap() : 
                  activeTab === 'illustrations' ? renderIllustrations() :
-                 renderSouvenirs()}
+                 activeTab === 'souvenirs' ? renderSouvenirs() :
+                 renderNumbers()}
               </div>
 
               {/* 3. Bottom Navigation */}
-              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 flex justify-around items-center z-30 pb-safe">
+              <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-1 py-3 flex justify-around items-center z-30 pb-safe">
                 <button 
                   onClick={() => setActiveTab('timeline')}
-                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'timeline' ? 'text-yellow-600' : 'text-gray-400'}`}
+                  className={`flex flex-col items-center gap-1 min-w-[50px] transition-colors ${activeTab === 'timeline' ? 'text-yellow-600' : 'text-gray-400'}`}
                 >
-                  <List size={22} />
-                  <span className="text-[10px] font-bold">每日行程</span>
+                  <List size={20} />
+                  <span className="text-[9px] font-bold">每日行程</span>
                 </button>
                 
                 <button 
                   onClick={() => setActiveTab('illustrations')}
-                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'illustrations' ? 'text-yellow-600' : 'text-gray-400'}`}
+                  className={`flex flex-col items-center gap-1 min-w-[50px] transition-colors ${activeTab === 'illustrations' ? 'text-yellow-600' : 'text-gray-400'}`}
                 >
-                  <ImageIcon size={22} />
-                  <span className="text-[10px] font-bold">插圖</span>
+                  <ImageIcon size={20} />
+                  <span className="text-[9px] font-bold">行程插圖</span>
                 </button>
 
                 {/* Floating Action Button Style Center */}
-                <div className="relative -top-6">
+                <div className="relative -top-5">
                   <button 
-                     className="w-14 h-14 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full shadow-xl flex items-center justify-center text-white border-4 border-gray-50 transform active:scale-95 transition-transform"
+                     className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full shadow-xl flex items-center justify-center text-white border-4 border-gray-50 transform active:scale-95 transition-transform"
                      onClick={() => {
                         setActiveTab('timeline');
                         setCurrentDay(1); // Reset to day 1 or current real date logic
                      }}
                   >
-                     <Plane size={24} />
+                     <Plane size={20} />
                   </button>
                 </div>
 
                 <button 
                   onClick={() => setActiveTab('souvenirs')}
-                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'souvenirs' ? 'text-yellow-600' : 'text-gray-400'}`}
+                  className={`flex flex-col items-center gap-1 min-w-[50px] transition-colors ${activeTab === 'souvenirs' ? 'text-yellow-600' : 'text-gray-400'}`}
                 >
-                  <ShoppingBag size={22} />
-                  <span className="text-[10px] font-bold">伴手禮</span>
+                  <ShoppingBag size={20} />
+                  <span className="text-[9px] font-bold">伴手禮</span>
+                </button>
+
+                <button 
+                  onClick={() => setActiveTab('numbers')}
+                  className={`flex flex-col items-center gap-1 min-w-[50px] transition-colors ${activeTab === 'numbers' ? 'text-yellow-600' : 'text-gray-400'}`}
+                >
+                  <Hash size={20} />
+                  <span className="text-[9px] font-bold">埃及數字</span>
                 </button>
 
                 <button 
                   onClick={() => setActiveTab('map')}
-                  className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === 'map' ? 'text-yellow-600' : 'text-gray-400'}`}
+                  className={`flex flex-col items-center gap-1 min-w-[50px] transition-colors ${activeTab === 'map' ? 'text-yellow-600' : 'text-gray-400'}`}
                 >
-                  <MapIcon size={22} />
-                  <span className="text-[10px] font-bold">總覽地圖</span>
+                  <MapIcon size={20} />
+                  <span className="text-[9px] font-bold">總覽地圖</span>
                 </button>
               </div>
 
               {/* Modals */}
+              {/* ... existing modals ... */}
               <Modal 
                 isOpen={!!modalData} 
                 data={modalData} 
